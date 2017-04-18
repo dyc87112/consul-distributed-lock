@@ -45,7 +45,6 @@ public class Semaphore extends BaseLock {
      * @throws IOException
      */
     public Boolean acquired(boolean block) throws IOException {
-
         if (acquired) {
             log.error("{} - Already acquired", sessionId);
             throw new RuntimeException(sessionId + " - Already acquired");

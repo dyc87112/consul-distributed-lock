@@ -18,6 +18,7 @@ public class TestLock {
     @Test
     public void testLock() throws Exception  {
         ConsulClient consulClient = new ConsulClient();
+        CheckTtl checkTtl = new CheckTtl("lock-1", consulClient);
         new Thread(new LockRunner(1, new CheckTtl("lock-1", consulClient))).start();
         new Thread(new LockRunner(2, new CheckTtl("lock-2", consulClient))).start();
         new Thread(new LockRunner(3, new CheckTtl("lock-3", consulClient))).start();

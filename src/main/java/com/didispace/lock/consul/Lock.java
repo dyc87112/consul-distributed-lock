@@ -2,12 +2,9 @@ package com.didispace.lock.consul;
 
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.kv.model.PutParams;
-import com.ecwid.consul.v1.session.model.NewSession;
-import com.ecwid.consul.v1.session.model.Session;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 基于Consul的互斥锁
@@ -16,6 +13,7 @@ import java.util.List;
  * @create 2017/4/6.
  * @blog http://blog.didispace.com
  */
+@Slf4j
 public class Lock extends BaseLock {
 
     private static final String prefix = "lock/";  // 同步锁参数前缀
