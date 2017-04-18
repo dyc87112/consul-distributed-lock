@@ -59,5 +59,11 @@ try {
 ### 持续优化ing
 
 我的博客：http://blog.didispace.com
+
 我的公众号：
 
+![输入图片说明](https://git.oschina.net/uploads/images/2017/0418/232718_81992c15_437188.jpeg "在这里输入图片标题")
+
+我的新书：
+
+![输入图片说明](https://git.oschina.net/uploads/images/2017/0418/232734_5109a4d9_437188.png "在这里输入图片标题")
