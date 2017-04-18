@@ -38,7 +38,7 @@ class LockRunner implements Runnable {
 
     @Override
     public void run() {
-        Lock lock = new Lock(new ConsulClient(), "lock-session", "lock-key", checkTtl);
+        Lock lock = new Lock(new ConsulClient(), "lock-key", checkTtl);
         try {
             // 获取分布式互斥锁（参数含义：阻塞模式、每次尝试获取锁的间隔500ms、尝试n次）
             if (lock.lock(true, 500L, null)) {

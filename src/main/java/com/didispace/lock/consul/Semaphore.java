@@ -3,12 +3,9 @@ package com.didispace.lock.consul;
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.kv.model.GetValue;
 import com.ecwid.consul.v1.kv.model.PutParams;
-import com.ecwid.consul.v1.session.model.NewSession;
-import com.ecwid.consul.v1.session.model.Session;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,28 +18,23 @@ import java.util.Map;
  * @blog http://blog.didispace.com
  */
 @Slf4j
-public class Semaphore {
+public class Semaphore extends BaseLock {
 
     private static final String prefix = "semaphore/";  // 信号量参数前缀
 
-    private ConsulClient consulClient;
     private int limit;
-    private String keyPath;
-    private String sessionId = null;
     private boolean acquired = false;
 
-    private CheckTtl checkTtl;  // Check Ttl
 
     /**
      * @param consulClient consul客户端实例
      * @param limit        信号量上限值
-     * @param keyPath      信号量在consul中存储的参数路径
+     * @param lockKey      信号量在consul中存储的参数路径
+     * @param checkTtl      对锁Session的TTL
      */
-    public Semaphore(ConsulClient consulClient, int limit, String keyPath, CheckTtl checkTtl) {
-        this.consulClient = consulClient;
+    public Semaphore(ConsulClient consulClient, int limit, String lockKey, CheckTtl checkTtl) {
+        super(consulClient, prefix + lockKey, checkTtl);
         this.limit = limit;
-        this.keyPath = prefix + keyPath;
-        this.checkTtl = checkTtl;
     }
 
     /**
@@ -59,9 +51,9 @@ public class Semaphore {
             throw new RuntimeException(sessionId + " - Already acquired");
         }
 
-        // create session
-        clearSession();
-        this.sessionId = createSessionId("semaphore");
+        // destroy session and create new session
+        destroySession();
+        this.sessionId = createSession("semaphore" + this.keyPath);
         log.debug("Create session : {}", sessionId);
 
         // add contender entry
@@ -80,7 +72,7 @@ public class Semaphore {
             String lockKey = keyPath + "/.lock";
             GetValue lockKeyContent = consulClient.getKVValue(lockKey).getValue();
             if (lockKeyContent != null) {
-                // lock值转换
+                // get lock value
                 ContenderValue contenderValue = ContenderValue.parse(lockKeyContent);
 
                 // 当前信号量已满
@@ -90,7 +82,7 @@ public class Semaphore {
                     if (block) {
                         // 如果是阻塞模式，再尝试
                         try {
-                            Thread.sleep(300L);
+                            Thread.sleep(500L);
                         } catch (InterruptedException e) {
                         }
                         continue;
@@ -124,25 +116,6 @@ public class Semaphore {
                 continue;
             }
         }
-    }
-
-    /**
-     * 创建sessionId
-     *
-     * @param sessionName
-     * @return
-     */
-    public String createSessionId(String sessionName) {
-        NewSession newSession = new NewSession();
-        newSession.setName(sessionName);
-        if (checkTtl != null) {
-            checkTtl.start();
-            List<String> checks = new ArrayList<>();
-            checks.add(checkTtl.getCheckId());
-            newSession.setChecks(checks);
-            newSession.setBehavior(Session.Behavior.DELETE);
-        }
-        return consulClient.sessionCreate(newSession, null).getValue();
     }
 
     /**
@@ -182,10 +155,7 @@ public class Semaphore {
             checkTtl.stop();
         }
 
-        if (sessionId != null) {
-            consulClient.sessionDestroy(sessionId, null);
-            sessionId = null;
-        }
+        destroySession();
     }
 
 
