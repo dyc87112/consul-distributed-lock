@@ -3,8 +3,8 @@ package com.didispace.lock.consul;
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.OperationException;
 import com.ecwid.consul.v1.agent.model.NewCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,24 +14,18 @@ import java.util.TimerTask;
  * @create 2017/4/12.
  * @blog http://blog.didispace.com
  */
+@Slf4j
 public class CheckTtl {
-
-    private Logger logger = LoggerFactory.getLogger(getClass());
 
     private ConsulClient consulClient;
 
+    @Getter
     private String checkId;
     private NewCheck check;
     private Timer timer;
 
     private int ttlDelay = 5000;
     private int ttlPeriod = 10000;
-
-
-    public CheckTtl(String checkId) {
-        this.checkId = checkId;
-    }
-
 
     public CheckTtl(String checkId, ConsulClient consulClient) {
         this.checkId = checkId;
@@ -78,16 +72,12 @@ public class CheckTtl {
         }
     }
 
-    public String getCheckId() {
-        return checkId;
-    }
-
     class TtlTask extends TimerTask {
 
         @Override
         public void run() {
             try {
-                logger.debug("{} run ttl...", checkId);
+                log.debug("{} run ttl...", checkId);
                 consulClient.agentCheckPass(checkId);
             } catch (OperationException e) {
                 e.printStackTrace();
