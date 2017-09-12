@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -176,15 +177,16 @@ public class Semaphore extends BaseLock {
         GetValue lockKeyContent = consulClient.getKVValue(lockKey).getValue();
         if (lockKeyContent != null) {
             // 清理holders中存储的不在semaphore/<key>/<session>中的session（说明该session已经被释放了）
-            boolean needUpdate = false;
+            List<String> removeList = new LinkedList<>();
             for(int i = 0; i < contenderValue.getHolders().size(); i ++) {
-                if (!aliveSessionMap.containsKey(contenderValue.getHolders().get(i))) {
+                String holder = contenderValue.getHolders().get(i);
+                if (!aliveSessionMap.containsKey(holder)) {
                     // 该session已经失效，需要从holder中剔除
-                    needUpdate = true;
-                    contenderValue.getHolders().remove(i);
+                    removeList.add(holder);
                 }
             }
-            if (needUpdate) {
+            if (removeList.size() > 0) {
+                contenderValue.getHolders().removeAll(removeList);
                 // 清理失效的holder
                 PutParams putParams = new PutParams();
                 putParams.setCas(lockKeyContent.getModifyIndex());
